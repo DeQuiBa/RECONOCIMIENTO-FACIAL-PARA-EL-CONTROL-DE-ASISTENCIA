@@ -1,0 +1,72 @@
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.callbacks import EarlyStopping
+
+# Ajustar la semilla para reproducibilidad
+np.random.seed(42)
+tf.random.set_seed(42)
+
+# Parámetros
+num_students = 1000  # Fijo
+num_timesteps = 10   # Fijo
+
+# Generar datos simulados
+data = {
+    'student_id': np.repeat(np.arange(num_students), num_timesteps),
+    'timestep': np.tile(np.arange(num_timesteps), num_students),
+    'exam_score': np.random.normal(loc=70, scale=15, size=num_students * num_timesteps),
+    'homework_score': np.random.normal(loc=75, scale=10, size=num_students * num_timesteps),
+    'attendance': np.random.choice([0, 1], size=num_students * num_timesteps, p=[0.3, 0.7]),
+    'dropout': np.random.choice([0, 1], size=num_students * num_timesteps, p=[0.85, 0.15])
+}
+
+# Introducir correlación: estudiantes con bajo rendimiento tienen mayor probabilidad de abandonar
+data['dropout'] = np.where(
+    (data['exam_score'] < 50) & (data['homework_score'] < 50) & (data['attendance'] == 0),
+    1,
+    data['dropout']
+)
+
+df = pd.DataFrame(data)
+
+# Seleccionar características y etiqueta
+X = df[['exam_score', 'homework_score', 'attendance']].values
+y = df['dropout'].values
+
+# Escalado de las características
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Dividir datos en conjuntos de entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42, stratify=y)
+
+# Reformatear los datos para la red LSTM
+X_train_lstm = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
+X_test_lstm = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
+
+# Construir modelo simple
+model = Sequential([
+    LSTM(64, input_shape=(X_train_lstm.shape[1], X_train_lstm.shape[2]), return_sequences=False),
+    Dropout(0.2),
+    Dense(1, activation='sigmoid')
+])
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Entrenar modelo
+history = model.fit(
+    X_train_lstm, y_train,
+    epochs=10,
+    batch_size=64,
+    validation_data=(X_test_lstm, y_test),
+    verbose=1
+)
+
+# Evaluación del modelo
+loss, accuracy = model.evaluate(X_test_lstm, y_test, verbose=0)
+print(f'Loss: {loss:.4f}, Accuracy: {accuracy:.4f}')
