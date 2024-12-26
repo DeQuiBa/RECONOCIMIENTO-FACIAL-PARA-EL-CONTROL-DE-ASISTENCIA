@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Asistencia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .form-container label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .form-container input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-container input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-container input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Formulario de Asistencia</h2>
+        <form id="attendanceForm" method="POST">
+            <label for="name">Nombre:</label>
+            <input type="text" id="name" name="name" readonly>
+
+            <label for="attendance">Asistencia:</label>
+            <input type="text" id="attendance" name="attendance" value="A">
+
+            <label for="absence">Falta:</label>
+            <input type="text" id="absence" name="absence" value="F">
+
+            <input type="submit" value="Enviar">
+        </form>
+    </div>
+
+    <script>
+        // Leer el archivo JSON que contiene el nombre de la persona reconocida
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                if (data.name === "Deivis") {
+                    // Autocompletar el formulario con el nombre de Deivis
+                    document.getElementById('name').value = data.name;
+                    document.getElementById('attendance').value = "A";  // Asistencia marcada como "A"
+                    document.getElementById('absence').value = "F";     // Falta marcada como "F"
+                }
+            })
+            .catch(error => console.error('Error al cargar los datos:', error));
+    </script>
+
+</body>
+</html>
